@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Bowire UDP listener plugin — binds to multicast / broadcast / unicast UDP endpoints and streams each received datagram as a JSON envelope (source address, byte count, base64 raw, UTF-8 text preview when applicable). Useful for debugging any UDP protocol in the Bowire workbench.</Description>
+    <PackageId>Kuestenlogik.Bowire.Protocol.Udp</PackageId>
+    <PackageTags>bowire;bowire-plugin;udp;multicast;broadcast;network;debugging;developer-tools</PackageTags>
+    <IsPackable>true</IsPackable>
+    <!-- CA1873 fires on logger calls whose structured arguments are
+         plain property accesses. At this plugin's log volume the
+         source-generated LoggerMessage alternative is overkill. -->
+    <NoWarn>$(NoWarn);CA1873</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Kuestenlogik.Bowire.Protocol.Udp.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Kuestenlogik.Bowire" />
+  </ItemGroup>
+
+</Project>
