@@ -52,6 +52,14 @@ Payload source: `responseBinary` (base64 raw bytes) is preferred; otherwise the 
 
 `Bowire.Protocol.Dis` gives you typed DIS decoding (entity discovery, PDU filtering, typed envelopes per IEEE 1278.1). `Bowire.Protocol.Udp` is the low-level cousin — it doesn't decode any protocol, it just surfaces bytes. Run both at once: DIS on one URL for typed per-entity streams, UDP on the same port for the raw-bytes view. Both plugins ship a mock emitter so recordings captured via either can be replayed; pick the protocol string (`dis` vs `udp`) on your steps to route them to the right emitter.
 
+## Sample
+
+A runnable end-to-end sample lives under [`samples/Kuestenlogik.Bowire.Protocol.Udp.Sample`](samples/Kuestenlogik.Bowire.Protocol.Udp.Sample) — an ASP.NET Core host that emits AIS-style position pings on multicast `239.0.13.37:8137` (~1.5 s cadence) and pipe-delimited port-call status lines on unicast `127.0.0.1:8138` (~3 s cadence), so the **UDP** tab has live datagrams to render the moment you subscribe.
+
+```bash
+dotnet run --project samples/Kuestenlogik.Bowire.Protocol.Udp.Sample
+```
+
 ## Install
 
 ```
