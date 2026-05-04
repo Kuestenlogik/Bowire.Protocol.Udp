@@ -7,6 +7,11 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using Kuestenlogik.Bowire;
+// Force the UDP plugin assembly to load before AddBowire's reflection
+// scan runs — without an explicit type reference the JIT only loads
+// the plugin DLL on first use, which is too late for the discovery
+// pass and Bowire reports "No protocol plugins loaded".
+_ = typeof(Kuestenlogik.Bowire.Protocol.Udp.BowireUdpProtocol);
 
 // Two background emitters keep the UDP wire warm so the Bowire
 // workbench has live datagrams to render the moment a user subscribes:
@@ -28,7 +33,14 @@ builder.Services.AddHostedService<PositionPingEmitter>();
 builder.Services.AddHostedService<PortCallEmitter>();
 
 var app = builder.Build();
-app.MapBowire();
+// Pre-seed the two UDP endpoints as discovered server URLs so the
+// workbench shows them in the sidebar the moment the page loads —
+// no need for the user to type them into "Add server URL" by hand.
+app.MapBowire(options =>
+{
+    options.ServerUrls.Add("udp://239.0.13.37:8137");
+    options.ServerUrls.Add("udp://127.0.0.1:8138");
+});
 app.Run();
 
 /// <summary>Three real harbour vessels recycled across both emitters.</summary>
