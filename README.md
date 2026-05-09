@@ -1,5 +1,10 @@
 # Bowire.Protocol.Udp
 
+[![CI](https://img.shields.io/github/actions/workflow/status/Kuestenlogik/Bowire.Protocol.Udp/ci.yml?branch=main&label=CI)](https://github.com/Kuestenlogik/Bowire.Protocol.Udp/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/Kuestenlogik/Bowire.Protocol.Udp/branch/main/graph/badge.svg)](https://codecov.io/gh/Kuestenlogik/Bowire.Protocol.Udp)
+[![NuGet](https://img.shields.io/nuget/v/Kuestenlogik.Bowire.Protocol.Udp)](https://www.nuget.org/packages/Kuestenlogik.Bowire.Protocol.Udp)
+[![License](https://img.shields.io/github/license/Kuestenlogik/Bowire.Protocol.Udp)](https://github.com/Kuestenlogik/Bowire.Protocol.Udp/blob/main/LICENSE)
+
 Generic UDP listener plugin for the [Bowire](https://github.com/Kuestenlogik/Bowire) workbench.
 
 Bind to any UDP endpoint — multicast group, limited or subnet-directed broadcast, or unicast address — and stream every received datagram into the workbench as a JSON envelope. Useful for debugging any UDP-based protocol without a dedicated plugin: DIS (when you want raw bytes alongside `Bowire.Protocol.Dis`'s typed decoding), NetFlow, syslog, game-server telemetry, custom sensor feeds, …
