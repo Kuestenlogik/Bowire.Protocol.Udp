@@ -98,9 +98,12 @@ public sealed class UdpMockEmitter : IBowireMockEmitter
         _cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         _schedulerTask = Task.Run(() => RunAsync(udpSteps, options, logger, _cts.Token), _cts.Token);
 
-        logger.LogInformation(
-            "udp-emitter sending → udp://{Address}:{Port} (mode={Mode}, steps={Count})",
-            address, port, mode, udpSteps.Count);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                "udp-emitter sending → udp://{Address}:{Port} (mode={Mode}, steps={Count})",
+                address, port, mode, udpSteps.Count);
+        }
         return Task.CompletedTask;
     }
 
@@ -202,8 +205,11 @@ public sealed class UdpMockEmitter : IBowireMockEmitter
         try
         {
             await _socket!.SendAsync(payload, payload.Length, _destination);
-            logger.LogInformation(
-                "udp-emit(step={StepId}, bytes={Bytes})", step.Id, payload.Length);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation(
+                    "udp-emit(step={StepId}, bytes={Bytes})", step.Id, payload.Length);
+            }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {

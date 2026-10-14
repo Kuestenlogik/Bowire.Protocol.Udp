@@ -162,7 +162,7 @@ public sealed class BowireUdpProtocolTests
 
     private static int RandomPort()
     {
-#pragma warning disable CA5394
+#pragma warning disable CA5394 // a random test port, not a secret
         return 42000 + Random.Shared.Next(0, 5000);
 #pragma warning restore CA5394
     }

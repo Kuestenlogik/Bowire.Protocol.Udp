@@ -5,10 +5,6 @@
     <PackageId>Kuestenlogik.Bowire.Protocol.Udp</PackageId>
     <PackageTags>bowire;bowire-plugin;udp;multicast;broadcast;network;debugging;developer-tools</PackageTags>
     <IsPackable>true</IsPackable>
-    <!-- CA1873 fires on logger calls whose structured arguments are
-         plain property accesses. At this plugin's log volume the
-         source-generated LoggerMessage alternative is overkill. -->
-    <NoWarn>$(NoWarn);CA1873</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

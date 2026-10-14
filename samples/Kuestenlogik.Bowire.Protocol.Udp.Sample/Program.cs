@@ -4,6 +4,7 @@
 using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Kuestenlogik.Bowire;
@@ -46,6 +47,9 @@ app.Run();
 /// <summary>Three real harbour vessels recycled across both emitters.</summary>
 internal static class Fleet
 {
+    /// <summary>A value in [0, 1) for the simulated drift; a crypto source keeps CA5394 quiet at no cost here.</summary>
+    public static double NextUnit() => RandomNumberGenerator.GetInt32(int.MaxValue) / (double)int.MaxValue;
+
     public static readonly Vessel[] Ships =
     [
         new(211_457_000, "Nordstern",  "Hamburg",  53.5413, 9.9786, "berth-A1"),
@@ -62,6 +66,7 @@ internal sealed record Vessel(int Mmsi, string Name, string Port, double Lat, do
 /// 239.0.13.37:8137. Loopback is enabled so a Bowire instance on the
 /// same host sees its own packets.
 /// </summary>
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Created by AddHostedService<T>().")]
 internal sealed class PositionPingEmitter(ILogger<PositionPingEmitter> logger) : BackgroundService
 {
     public static readonly IPAddress Group = IPAddress.Parse("239.0.13.37");
@@ -76,12 +81,14 @@ internal sealed class PositionPingEmitter(ILogger<PositionPingEmitter> logger) :
         socket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.MulticastTimeToLive, 1);
 
         var endpoint = new IPEndPoint(Group, Port);
-        var rng = new Random();
         var index = 0;
 
-        logger.LogInformation(
-            "Multicast position-ping emitter starting → {Group}:{Port} (loopback ON, TTL 1)",
-            Group, Port);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                "Multicast position-ping emitter starting → {Group}:{Port} (loopback ON, TTL 1)",
+                Group, Port);
+        }
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -90,10 +97,10 @@ internal sealed class PositionPingEmitter(ILogger<PositionPingEmitter> logger) :
 
             // Drift each ship by a tiny random delta so successive
             // pings show movement, not constants.
-            var lat = ship.Lat + ((rng.NextDouble() - 0.5) * 0.001);
-            var lon = ship.Lon + ((rng.NextDouble() - 0.5) * 0.001);
-            var sog = Math.Round(8.5 + (rng.NextDouble() * 4.0), 2); // knots
-            var cog = Math.Round(rng.NextDouble() * 360.0, 1);       // degrees
+            var lat = ship.Lat + ((Fleet.NextUnit() - 0.5) * 0.001);
+            var lon = ship.Lon + ((Fleet.NextUnit() - 0.5) * 0.001);
+            var sog = Math.Round(8.5 + (Fleet.NextUnit() * 4.0), 2); // knots
+            var cog = Math.Round(Fleet.NextUnit() * 360.0, 1);       // degrees
 
             var payload = JsonSerializer.SerializeToUtf8Bytes(new
             {
@@ -110,9 +117,12 @@ internal sealed class PositionPingEmitter(ILogger<PositionPingEmitter> logger) :
             try
             {
                 await socket.SendToAsync(payload, SocketFlags.None, endpoint, stoppingToken);
-                logger.LogInformation(
-                    "Multicast position-ping → {Group}:{Port}  mmsi={Mmsi} name={Name} lat={Lat:F4} lon={Lon:F4} sog={Sog} cog={Cog}",
-                    Group, Port, ship.Mmsi, ship.Name, lat, lon, sog, cog);
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation(
+                        "Multicast position-ping → {Group}:{Port}  mmsi={Mmsi} name={Name} lat={Lat:F4} lon={Lon:F4} sog={Sog} cog={Cog}",
+                        Group, Port, ship.Mmsi, ship.Name, lat, lon, sog, cog);
+                }
             }
             catch (SocketException ex)
             {
@@ -138,6 +148,7 @@ internal sealed class PositionPingEmitter(ILogger<PositionPingEmitter> logger) :
 /// ~3 s to 127.0.0.1:8138. Pipe-delimited so the UDP plugin's UTF-8
 /// preview renders cleanly in the Bowire frame pane without JSON noise.
 /// </summary>
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Created by AddHostedService<T>().")]
 internal sealed class PortCallEmitter(ILogger<PortCallEmitter> logger) : BackgroundService
 {
     public static readonly IPAddress Host = IPAddress.Loopback;
@@ -152,17 +163,19 @@ internal sealed class PortCallEmitter(ILogger<PortCallEmitter> logger) : Backgro
     {
         using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
         var endpoint = new IPEndPoint(Host, Port);
-        var rng = new Random();
         var index = 0;
 
-        logger.LogInformation(
-            "Unicast port-call emitter starting → {Host}:{Port}", Host, Port);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation(
+                "Unicast port-call emitter starting → {Host}:{Port}", Host, Port);
+        }
 
         while (!stoppingToken.IsCancellationRequested)
         {
             var ship = Fleet.Ships[index % Fleet.Ships.Length];
             var status = Statuses[index % Statuses.Length];
-            var eta = DateTimeOffset.UtcNow.AddMinutes(rng.Next(5, 90));
+            var eta = DateTimeOffset.UtcNow.AddMinutes(RandomNumberGenerator.GetInt32(5, 90));
             index++;
 
             // pipe-delimited line: easy to eyeball in a frame pane,
@@ -175,9 +188,12 @@ internal sealed class PortCallEmitter(ILogger<PortCallEmitter> logger) : Backgro
             try
             {
                 await socket.SendToAsync(payload, SocketFlags.None, endpoint, stoppingToken);
-                logger.LogInformation(
-                    "Unicast port-call → {Host}:{Port}  ship={Name} berth={Berth} status={Status}",
-                    Host, Port, ship.Name, ship.Berth, status);
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation(
+                        "Unicast port-call → {Host}:{Port}  ship={Name} berth={Berth} status={Status}",
+                        Host, Port, ship.Name, ship.Berth, status);
+                }
             }
             catch (SocketException ex)
             {
